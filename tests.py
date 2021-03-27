@@ -76,6 +76,12 @@ class TestForwardQ1(unittest.TestCase):
         self.assertTupleEqual(ans_AL.shape, (10, 1))
         self.assertEqual(len(ans_cache), 2)
 
+    def test_cost_function(self):
+        AL = np.array([[0.5, 1, 0.4], [0.25, 0, 0.2], [0.1, 0, 0.2], [0.15, 0, 0.2]])
+        Y = np.array([[0, 1, 0], [1, 0, 1], [0, 0, 0], [0, 0, 0]])
+        ans = Main.compute_cost(AL, Y)
+        self.assertEqual(ans,  0.9985774245179969)
+
 
 if __name__ == '__main__':
     unittest.main()

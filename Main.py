@@ -70,9 +70,10 @@ def compute_cost(AL: np.ndarray, Y: np.ndarray) -> np.ndarray:
     """
     pred_log = np.log(AL)
     y_pred_actual = np.multiply(pred_log, Y)
+    y_pred_actual[np.isnan(y_pred_actual)] = 0
     cost_sum = np.sum(y_pred_actual)
     cost = cost_sum/AL.shape[1]
-    return cost
+    return -cost
 
 
 def apply_batchnorm(A: np.ndarray) -> np.ndarray:
