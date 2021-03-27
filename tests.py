@@ -6,21 +6,22 @@ import numpy as np
 class TestForwardQ1(unittest.TestCase):
 
     def test_initialize_parameters(self):
-        test_in = (1, 1)
-        ans = Main.initialize_parameters(test_in)
-        expected_weights = [np.zeros((1, 1))] * 2
-        expected_bias_len = len(test_in)
-        for ans_w, expected_w in zip(ans['W'], expected_weights):
-            self.assertTupleEqual(ans_w.shape, expected_w.shape)
-        self.assertEqual(expected_bias_len, len(ans['b']))
+        # test_in = (1, 1)
+        # ans = Main.initialize_parameters(test_in)
+        # expected_weights = [np.zeros((1, 1))] * 2
+        # expected_bias_len = (2, 1)
+        # for ans_w, expected_w in zip(ans['W'], expected_weights):
+        #     self.assertTupleEqual(ans_w.shape, expected_w.shape)
+        # self.assertEqual(expected_bias_len, len(ans['b']))
 
-        test_in = (4, 2, 5, 8, 10)
+        test_in = (4, 2, 10)
         ans = Main.initialize_parameters(test_in)
-        expected_weights = [np.zeros((1, x)) for x in test_in]
-        expected_bias_len = len(test_in)
+        expected_weights = [(4, 2), (2, 10)]
+        expected_bias = [(2, 1), (10, 1)]
         for ans_w, expected_w in zip(ans['W'], expected_weights):
-            self.assertTupleEqual(ans_w.shape, expected_w.shape)
-        self.assertEqual(expected_bias_len, len(ans['b']))
+            self.assertTupleEqual(ans_w.shape, expected_w)
+        for ans_b, expected_b in zip(ans['b'], expected_bias):
+            self.assertTupleEqual(ans_b.shape, expected_b)
 
     def test_linear_forward(self):
         W = np.array([0.5, 0.75])
@@ -59,6 +60,21 @@ class TestForwardQ1(unittest.TestCase):
         #                                  'W': W,
         #                                  'b': bias,
         #                                  'Z': expected_z})
+
+    def test_batchnorm(self):
+        a = np.array([[3, 5, 1], [1, 2, 3]])
+        ans = Main.apply_batchnorm(a)
+        expected_ans = [[0., 1.2245152962941819, -1.2245152962941819],
+                        [-1.2238273448265007, 0., 1.2238273448265007]]
+        self.assertListEqual(ans.tolist(), expected_ans)
+
+    def test_L_model_forward(self):
+        inp = np.random.randn(2, 3)
+        inp_flat = np.reshape(inp, (6, 1))
+        init = Main.initialize_parameters((6, 3, 10))
+        ans_AL, ans_cache = Main.L_model_forward(inp_flat, init, False)
+        self.assertTupleEqual(ans_AL.shape, (10, 1))
+        self.assertEqual(len(ans_cache), 2)
 
 
 if __name__ == '__main__':
