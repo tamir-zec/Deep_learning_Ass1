@@ -75,12 +75,64 @@ class TestForwardQ1(unittest.TestCase):
         ans_AL, ans_cache = Main.L_model_forward(inp_flat, init, False)
         self.assertTupleEqual(ans_AL.shape, (10, 1))
         self.assertEqual(len(ans_cache), 2)
+        ans_AL, ans_cache = Main.L_model_forward(inp_flat, init, True)
+        self.assertTupleEqual(ans_AL.shape, (10, 1))
+        self.assertEqual(len(ans_cache), 2)
 
     def test_cost_function(self):
         AL = np.array([[0.5, 1, 0.4], [0.25, 0, 0.2], [0.1, 0, 0.2], [0.15, 0, 0.2]])
         Y = np.array([[0, 1, 0], [1, 0, 1], [0, 0, 0], [0, 0, 0]])
         ans = Main.compute_cost(AL, Y)
-        self.assertEqual(ans,  0.9985774245179969)
+        self.assertEqual(ans, 0.9985774245179969)
+
+
+class TestBackwardQ2(unittest.TestCase):
+    def test_linear_backward(self):
+        dz = np.random.randn(5, 2)
+        cache = {
+            'A': np.random.randn(7, 2),
+            'W': np.random.randn(7, 5),
+            'b': np.random.randn(5, 1)
+        }
+        da_prev, dw, db = Main.Linear_backward(dz, cache)
+        self.assertEqual(cache['W'].shape, dw.shape)
+        self.assertEqual(cache['b'].shape, db.shape)
+        self.assertEqual(cache['A'].shape, da_prev.shape)
+
+    def test_L_model_backward(self):
+        # softmax_prob = np.array([[0.5, 0, 0.5], [0.25, 0.25, 0.5], [0.3, 0.6, 0.1], [0.8, 0.2, 0]])
+        Y = np.array([[1, 0], [0, 1], [0, 0]])
+        inp = np.random.randn(2, 3, 2)
+        inp_flat = np.reshape(inp, (6, 2))
+        init = Main.initialize_parameters((6, 3, 3))
+        forward_AL, forward_cache = Main.L_model_forward(inp_flat, init, False)
+        grads = Main.L_model_backward(forward_AL, Y, forward_cache)
+        for i in range(2):   # check only all grads exist
+            dA = grads["dA" + str(i)]
+            dW = grads["dW" + str(i)]
+            db = grads["db" + str(i)]
+
+    def test_Update_parameters(self):
+        Y = np.array([[1, 0], [0, 1], [0, 0]])
+        inp = np.random.randn(2, 3, 2)
+        inp_flat = np.reshape(inp, (6, 2))
+        init = Main.initialize_parameters((6, 3, 3))
+        forward_AL, forward_cache = Main.L_model_forward(inp_flat, init, False)
+        grads = Main.L_model_backward(forward_AL, Y, forward_cache)
+        new_params = Main.Update_parameters(init, grads, 0.1)
+        for idx in range(2):
+            old_W = init['W'][idx]
+            old_b = init['b'][idx]
+            new_W = new_params['W'][idx]
+            new_b = new_params['b'][idx]
+            self.assertTupleEqual(old_W.shape, new_W.shape)
+            self.assertTupleEqual(old_b.shape, new_b.shape)
+            # print("new-W: ", new_W, "\nOld W: ", old_W)
+            # print("new-b: ", new_b, "\nOld-b: ", old_b)
+
+
+class TestQ3(unittest.TestCase):
+    pass
 
 
 if __name__ == '__main__':
