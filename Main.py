@@ -8,8 +8,9 @@ def initialize_parameters(layer_dims: List) -> Dict:
         'W': list(),
         'b': list()
     }
+    # lets try smart init
     for idx in range(1, len(layer_dims)):
-        weights = np.random.randn(layer_dims[idx - 1], layer_dims[idx])
+        weights = np.random.randn(layer_dims[idx - 1], layer_dims[idx])*np.sqrt(2/layer_dims[idx-1])
         bias = np.random.randn(layer_dims[idx], 1)
         layers['W'].append(weights)
         layers['b'].append(bias)
@@ -124,9 +125,10 @@ def linear_activation_backward(dA: np.ndarray, cache: Dict, activation: Callable
 
 
 def relu_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray:
-    dZ = np.maximum(activation_cache['Z'], 0)
-    dZ[dZ != 0] = 1
-    return dZ
+    dA_new = np.array(dA, copy=True)
+    dA_new[activation_cache['Z'] <= 0] = 0
+    dA_new[dA_new != 0] = 1
+    return dA_new
 
 
 def softmax_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray:
@@ -140,7 +142,7 @@ def derivative_cross_entropy(AL: np.ndarray, Y: np.ndarray) -> np.ndarray:
     :param Y: [classes X samples] - one hot vector of real classes
     :return: [classes X samples]
     """
-    return np.abs(Y-AL)
+    return np.abs(Y - AL)
 
 
 def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict:
@@ -151,7 +153,7 @@ def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict:
     :return: Dict[gradients]
     """
     grads = {}
-    dA = derivative_cross_entropy(AL,Y)
+    dA = derivative_cross_entropy(AL, Y)
     da_prev, dW, db = linear_activation_backward(dA, caches[-1], softmax_backward)
     layers = len(caches) - 1
     grads["dA" + str(layers)] = da_prev
@@ -159,7 +161,7 @@ def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict:
     grads["db" + str(layers)] = db
 
     for layer in reversed((range(layers))):
-        da_prev, dW, db = linear_activation_backward(dA, caches[layer], relu_backward)
+        da_prev, dW, db = linear_activation_backward(da_prev, caches[layer], relu_backward)
         grads["dA" + str(layer)] = da_prev
         grads["dW" + str(layer)] = dW
         grads["db" + str(layer)] = db
@@ -183,25 +185,26 @@ def Update_parameters(parameters: Dict, grads: Dict, learning_rate: float) -> Di
         b = parameters['b'][idx]
         dW = grads["dW" + str(idx)]
         db = grads["db" + str(idx)]
-        ans['W'].append(W-learning_rate*dW)
+        ans['W'].append(W - learning_rate * dW)
         ans['b'].append(b - learning_rate * db)
 
     return ans
 
 
-def generator_by_batch(X: np.ndarray, batch_size: int):
+def generator_by_batch(X: np.ndarray, Y: np.ndarray, batch_size: int):
     samples = X.shape[1]
     curr = 0
     while True:
         if curr + batch_size >= samples:
-            yield X[:, curr:]
+            yield X[:, curr:], Y[:, curr:]
             curr = 0
-        yield X[:, curr: curr + batch_size]
+        yield X[:, curr: curr + batch_size], Y[:, curr: curr + batch_size]
         curr += batch_size
 
 
 def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate: float,
-                  num_iterations: int, batch_size: int) -> [Dict, List[float]]:
+                  num_iterations: int, batch_size: int, use_batchnorm: bool = False,
+                  validation: Tuple[np.ndarray, np.ndarray]= None) -> [Dict, List[float]]:
     """
     :param X: [height*width , samples] - model input
     :param Y: [classes, samples] - one hot vector of real labels
@@ -214,16 +217,34 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
               * costs = list of floats
     """
     costs = list()
-    full_dims = [X.shape[0]] + layer_dims + [Y.shape[0]]
+    full_dims = [X.shape[0]] + layer_dims
     params = initialize_parameters(full_dims)
-    input_gen = generator_by_batch(X, batch_size)
+    input_gen = generator_by_batch(X, Y, batch_size)
     for curr_iter in range(num_iterations):
-        curr_inp = next(input_gen)
-        AL, caches = L_model_forward(curr_inp, params, False)
+        curr_inp, curr_labels = next(input_gen)
+        AL, caches = L_model_forward(curr_inp, params, use_batchnorm)
         if curr_iter % 100 == 0:
-            costs.append(compute_cost(AL, Y))
-        grads = L_model_backward(AL, Y, caches)
+            cost_AL, _ = L_model_forward(X, params, use_batchnorm)
+            costs.append(compute_cost(cost_AL, Y))
+            if validation is not None:
+                print(f'iter num:{curr_iter} - accuracy: {Predict(validation[0], validation[1], params, use_batchnorm)}')
+        grads = L_model_backward(AL, curr_labels, caches)
         params = Update_parameters(params, grads, learning_rate)
 
     return params, costs
 
+
+def Predict(X: np.ndarray, Y: np.ndarray, parameters: Dict, use_batchnorm: bool = False) -> float:
+    """
+       :param X: [height*width , samples] - model input
+       :param Y: [classes, samples] - one hot vector of real labels
+       :param parameters: Dictionary of Weights and Biases
+              :param use_batchnorm:
+       :return: accuracy:
+   """
+    predictions, _ = L_model_forward(X, parameters, use_batchnorm)
+    prediction_classes = np.argmax(predictions, axis=0)
+    real_y = np.argmax(Y, axis=0)
+    difference = (prediction_classes - real_y)
+    accuracy = len(difference[difference == 0]) / len(difference)
+    return accuracy

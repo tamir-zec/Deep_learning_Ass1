@@ -107,7 +107,7 @@ class TestBackwardQ2(unittest.TestCase):
         init = Main.initialize_parameters((6, 3, 3))
         forward_AL, forward_cache = Main.L_model_forward(inp_flat, init, False)
         grads = Main.L_model_backward(forward_AL, Y, forward_cache)
-        for i in range(2):   # check only all grads exist
+        for i in range(2):  # check only all grads exist
             dA = grads["dA" + str(i)]
             dW = grads["dW" + str(i)]
             db = grads["db" + str(i)]
@@ -132,7 +132,20 @@ class TestBackwardQ2(unittest.TestCase):
 
 
 class TestQ3(unittest.TestCase):
-    pass
+    pred = np.array([[0.5, 0.2, 0],
+                     [0.4, 0.1, 0],
+                     [0.1, 0.7, 0],
+                     [0, 0, 1]])
+    true_labels = np.array([[1, 0, 1],
+                            [0, 0, 0],
+                            [0, 1, 0],
+                            [0, 0, 0]])
+    # this is the accuracy calculation just checking, not real test
+    prediction_classes = np.argmax(pred, axis=0)
+    real_y = np.argmax(true_labels, axis=0)
+    difference = (prediction_classes - real_y)
+    accuracy = len(difference[difference == 0]) / len(difference)
+    print(accuracy)
 
 
 if __name__ == '__main__':
