@@ -26,4 +26,4 @@ y_test = y_test.transpose()
 # print("hello")
 
 learning_rate = 0.009
-Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, 480*5, 5000, use_batchnorm=True, validation=(x_val, y_val))
+Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, 480*150, 100, use_batchnorm=False, validation=(x_val, y_val))

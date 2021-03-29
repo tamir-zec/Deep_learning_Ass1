@@ -127,7 +127,7 @@ def linear_activation_backward(dA: np.ndarray, cache: Dict, activation: Callable
 def relu_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray:
     dA_new = np.array(dA, copy=True)
     dA_new[activation_cache['Z'] <= 0] = 0
-    dA_new[dA_new != 0] = 1
+    # dA_new[dA_new != 0] = 1
     return dA_new
 
 
