@@ -233,13 +233,13 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
             cost_AL, _ = L_model_forward(X, params, use_batchnorm)
             cost = compute_cost(cost_AL, Y)
             costs.append(cost)
-            if validation is not None :
-                val_acc = Predict(validation[0], validation[1], params, use_batchnorm)
-                train_acc = Predict(X, Y, params, use_batchnorm)
-                val_ans, _ = L_model_forward(validation[0], params, use_batchnorm)
-                val_cost = compute_cost(val_ans, validation[1])
-                print("iter num: {} - train cost: {:.3f} , train acc: {:.3f}  - val acc: {:.3f} , val-cost: {:.3f}".
-                      format(curr_iter, cost, train_acc, val_acc, val_cost))
+            # if validation is not None:
+            #     val_acc = Predict(validation[0], validation[1], params, use_batchnorm)
+            #     train_acc = Predict(X, Y, params, use_batchnorm)
+            #     val_ans, _ = L_model_forward(validation[0], params, use_batchnorm)
+            #     val_cost = compute_cost(val_ans, validation[1])
+            #     print("iter num: {} - train cost: {:.3f} , train acc: {:.3f}  - val acc: {:.3f} , val-cost: {:.3f}".
+            #           format(curr_iter, cost, train_acc, val_acc, val_cost))
 
             if early_stopping is not None:
                 early_ans = early_stopping(params, use_batchnorm)
