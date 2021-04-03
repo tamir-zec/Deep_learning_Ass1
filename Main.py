@@ -3,14 +3,14 @@ from collections.abc import Callable
 import numpy as np
 
 
-def initialize_parameters(layer_dims: List) -> Dict :
+def initialize_parameters(layer_dims: List) -> Dict:
     layers = {
         'W': list(),
         'b': list()
     }
     # lets try smart init
     np.random.seed(3)
-    for idx in range(1, len(layer_dims)) :
+    for idx in range(1, len(layer_dims)):
         weights = np.random.randn(layer_dims[idx - 1], layer_dims[idx]) * np.sqrt(2 / layer_dims[idx - 1])
         bias = np.random.randn(layer_dims[idx], 1)
         layers['W'].append(weights)
@@ -19,7 +19,7 @@ def initialize_parameters(layer_dims: List) -> Dict :
     return layers
 
 
-def linear_forward(A: np.ndarray, W: np.ndarray, b: np.ndarray) -> [List, Dict] :
+def linear_forward(A: np.ndarray, W: np.ndarray, b: np.ndarray) -> [List, Dict]:
     """
     :param A: [curr features X samples]
     :param W: [curr features X next features]
@@ -28,34 +28,34 @@ def linear_forward(A: np.ndarray, W: np.ndarray, b: np.ndarray) -> [List, Dict] 
     """
     z = np.matmul(W.transpose(), A) + b
     linear_cache = {
-        'A' : A,
-        'W' : W,
-        'b' : b,
+        'A': A,
+        'W': W,
+        'b': b,
     }
     return z, linear_cache
 
 
-def softmax(Z: np.ndarray) -> [List, Dict] :
+def softmax(Z: np.ndarray) -> [List, Dict]:
     exp = np.exp(Z)
     sum_array = np.sum(exp, axis=0)
     ans = exp / sum_array
-    return ans, {'Z' : Z}
+    return ans, {'Z': Z}
 
 
-def relu(Z: np.ndarray) -> [List, Dict] :
+def relu(Z: np.ndarray) -> [List, Dict]:
     ans = np.maximum(Z, 0)
-    return ans, {'Z' : Z}
+    return ans, {'Z': Z}
 
 
 def linear_activation_forward(A_prev: np.ndarray, W: np.ndarray, b: np.ndarray,
-                              activation: Callable) -> Tuple[np.ndarray, Dict] :
+                              activation: Callable) -> Tuple[np.ndarray, Dict]:
     z, z_cache = linear_forward(A_prev, W, b)
     new_A, activation_cache = activation(z)
     z_cache.update(activation_cache)
     return new_A, z_cache
 
 
-def L_model_forward(X: np.ndarray, parameters: Dict, use_batchnorm: bool) -> [np.ndarray, List] :
+def L_model_forward(X: np.ndarray, parameters: Dict, use_batchnorm: bool) -> [np.ndarray, List]:
     """
     :param X: [flatten input X  samples] - model input
     :param parameters:
@@ -66,7 +66,7 @@ def L_model_forward(X: np.ndarray, parameters: Dict, use_batchnorm: bool) -> [np
     biases = parameters['b']
     A_prev = X
     all_caches = list()
-    for layer_weight, layer_bias in zip(weights[:-1], biases[:-1]) :
+    for layer_weight, layer_bias in zip(weights[:-1], biases[:-1]):
         A_prev, cache = linear_activation_forward(A_prev, layer_weight, layer_bias, relu)
         all_caches.append(cache)
         if use_batchnorm :
@@ -76,7 +76,7 @@ def L_model_forward(X: np.ndarray, parameters: Dict, use_batchnorm: bool) -> [np
     return AL, all_caches
 
 
-def compute_cost(AL: np.ndarray, Y: np.ndarray) -> float :
+def compute_cost(AL: np.ndarray, Y: np.ndarray) -> float:
     """
     :param AL: [classes X samples] - prediction of softmax layer
     :param Y: [classes X samples] - np.ndarry - one hot vector for each sample. each column is one sample. rows are classes
@@ -90,7 +90,7 @@ def compute_cost(AL: np.ndarray, Y: np.ndarray) -> float :
     return -cost
 
 
-def apply_batchnorm(A: np.ndarray) -> np.ndarray :
+def apply_batchnorm(A: np.ndarray) -> np.ndarray:
     mean = np.mean(A, axis=1, keepdims=True)
     std = np.std(A, axis=1)
     epsilon = 1e-3
@@ -101,7 +101,7 @@ def apply_batchnorm(A: np.ndarray) -> np.ndarray :
     return np.matmul(diag, numerator)
 
 
-def Linear_backward(dZ: np.ndarray, cache: Dict) -> Tuple :
+def Linear_backward(dZ: np.ndarray, cache: Dict) -> Tuple:
     """
     :param dZ: [next features x samples]
     :param cache: of current layer
@@ -120,24 +120,24 @@ def Linear_backward(dZ: np.ndarray, cache: Dict) -> Tuple :
     return da_prev, dW, db
 
 
-def linear_activation_backward(dA: np.ndarray, cache: Dict, activation: Callable) -> Tuple :
+def linear_activation_backward(dA: np.ndarray, cache: Dict, activation: Callable) -> Tuple:
     grad_z = activation(dA, cache)
     return Linear_backward(grad_z, cache)
 
 
-def relu_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray :
+def relu_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray:
     dA_new = np.array(dA, copy=True)
     dA_new[activation_cache['Z'] <= 0] = 0
     # dA_new[dA_new != 0] = 1
     return dA_new
 
 
-def softmax_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray :
+def softmax_backward(dA: np.ndarray, activation_cache: Dict) -> np.ndarray:
     dz = activation_cache['Z'] - dA
     return dz
 
 
-def derivative_cross_entropy(AL: np.ndarray, Y: np.ndarray) -> np.ndarray :
+def derivative_cross_entropy(AL: np.ndarray, Y: np.ndarray) -> np.ndarray:
     """
     :param AL:  [classes X samples] - result of softmax
     :param Y: [classes X samples] - one hot vector of real classes
@@ -146,7 +146,7 @@ def derivative_cross_entropy(AL: np.ndarray, Y: np.ndarray) -> np.ndarray :
     return np.abs(Y - AL)
 
 
-def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict :
+def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict:
     """
     :param AL:  [classes,samples] - softmax probabilites
     :param Y:   [classes,samples] - one hot vector real ans
@@ -161,7 +161,7 @@ def L_model_backward(AL: np.ndarray, Y: np.ndarray, caches: List) -> Dict :
     grads["dW" + str(layers)] = dW
     grads["db" + str(layers)] = db
 
-    for layer in reversed((range(layers))) :
+    for layer in reversed((range(layers))):
         da_prev, dW, db = linear_activation_backward(da_prev, caches[layer], relu_backward)
         grads["dA" + str(layer)] = da_prev
         grads["dW" + str(layer)] = dW
@@ -178,10 +178,10 @@ def Update_parameters(parameters: Dict, grads: Dict, learning_rate: float) -> Di
     :return: Updated parameters
     """
     ans = {
-        'W' : list(),
-        'b' : list()
+        'W': list(),
+        'b': list()
     }
-    for idx in range(len(parameters['W'])) :
+    for idx in range(len(parameters['W'])):
         W = parameters['W'][idx]
         b = parameters['b'][idx]
         dW = grads["dW" + str(idx)]
@@ -196,10 +196,10 @@ def generator_by_batch(X: np.ndarray, Y: np.ndarray, batch_size: int):
     samples = X.shape[1]
     curr = 0
     while True :
-        if curr + batch_size >= samples :
-            yield X[:, curr :], Y[:, curr :]
+        if curr + batch_size >= samples:
+            yield X[:, curr:], Y[:, curr:]
             curr = 0
-        yield X[:, curr : curr + batch_size], Y[:, curr : curr + batch_size]
+        yield X[:, curr: curr + batch_size], Y[:, curr: curr + batch_size]
         curr += batch_size
 
 
@@ -229,7 +229,7 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
     for curr_iter in range(1, num_iterations + 1) :
         curr_inp, curr_labels = next(input_gen)
         AL, caches = L_model_forward(curr_inp, params, use_batchnorm)
-        if curr_iter % 100 == 0 :
+        if curr_iter % 100 == 0:
             cost_AL, _ = L_model_forward(X, params, use_batchnorm)
             cost = compute_cost(cost_AL, Y)
             costs.append(cost)
@@ -244,6 +244,7 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
             if early_stopping is not None:
                 early_ans = early_stopping(params, use_batchnorm)
                 if early_ans is not None:
+                    print(f"stopped after {curr_iter} steps")
                     return early_ans, costs
 
         grads = L_model_backward(AL, curr_labels, caches)

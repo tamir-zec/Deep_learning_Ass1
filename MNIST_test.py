@@ -10,7 +10,7 @@ import Main
 PIXEL_MAX_VALUE = 255
 
 
-def reshape_x_input(inp) :
+def reshape_x_input(inp):
     return inp.reshape(inp.shape[0], inp.shape[1] * inp.shape[2])
 
 
@@ -31,7 +31,7 @@ def get_early_stopping_callback(train_x, train_y, val_x, val_y, steps: int) -> C
         else:
             count += 1
         if count > steps:
-            print("early stopping with ma")
+            print("early stopping")
             return best_params
         else :
             return None
@@ -39,7 +39,7 @@ def get_early_stopping_callback(train_x, train_y, val_x, val_y, steps: int) -> C
     return callback
 
 
-def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray) :
+def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray):
     """
     :param X:
     :param Y:
@@ -54,8 +54,8 @@ def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndar
     shuf_y = stacked[-1]
     train_x = shuf_x[:, :cut_off_idx]
     train_y = shuf_y[:cut_off_idx]
-    val_x = shuf_x[:, cut_off_idx :]
-    val_y = shuf_y[cut_off_idx :]
+    val_x = shuf_x[:, cut_off_idx:]
+    val_y = shuf_y[cut_off_idx:]
     # convert to categorical
     train_y = np.eye(10)[train_y.astype(int)].transpose()
     val_y = np.eye(10)[val_y.astype(int)].transpose()
@@ -81,7 +81,7 @@ def old_test_split(x_train, y_train, x_test, y_test):
 
 def main():
     print("Start")
-    use_batchnorm = False
+    use_batchnorm = True
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train, y_train, x_val, y_val = pre_process_input(x_train, y_train, 0.2)
     # x_train, y_train, x_val, y_val, x_test, y_test = old_test_split(x_train, y_train, x_test, y_test)
@@ -91,11 +91,11 @@ def main():
     epochs = 200
 
     for batch_size in [32, 64, 128, 256, 512, 1024]:
-        early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 25)
-        coef = math.ceil(48000 / batch_size)
+        early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 30)
+        steps_per_epoch = math.ceil(48000 / batch_size)
         start_time = datetime.datetime.now()
-        params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, coef * epochs, batch_size,
-                                           use_batchnorm=use_batchnorm, validation=(x_val, y_val),
+        params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, steps_per_epoch * epochs,
+                                           batch_size, use_batchnorm=use_batchnorm, validation=(x_val, y_val),
                                            early_stopping=early_stopping)
         end_time = datetime.datetime.now()
         time_diff = end_time - start_time
@@ -114,5 +114,5 @@ def main():
         # print("\n\n")
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     main()
