@@ -1,7 +1,7 @@
 import Main
 import unittest
 import numpy as np
-
+import MNIST_test
 
 class TestForwardQ1(unittest.TestCase):
 
@@ -132,20 +132,26 @@ class TestBackwardQ2(unittest.TestCase):
 
 
 class TestQ3(unittest.TestCase):
-    pred = np.array([[0.5, 0.2, 0],
-                     [0.4, 0.1, 0],
-                     [0.1, 0.7, 0],
-                     [0, 0, 1]])
-    true_labels = np.array([[1, 0, 1],
-                            [0, 0, 0],
-                            [0, 1, 0],
-                            [0, 0, 0]])
-    # this is the accuracy calculation just checking, not real test
-    prediction_classes = np.argmax(pred, axis=0)
-    real_y = np.argmax(true_labels, axis=0)
-    difference = (prediction_classes - real_y)
-    accuracy = len(difference[difference == 0]) / len(difference)
-    print(accuracy)
+    def test_split(self):
+        x = np.arange(16.0).reshape(8,2)
+        y = np.array([40, 50])
+        MNIST_test.pre_process_input(x, y, 0.1)
+
+    def test_acc(self):
+        pred = np.array([[0.5, 0.2, 0],
+                         [0.4, 0.1, 0],
+                         [0.1, 0.7, 0],
+                         [0, 0, 1]])
+        true_labels = np.array([[1, 0, 1],
+                                [0, 0, 0],
+                                [0, 1, 0],
+                                [0, 0, 0]])
+        # this is the accuracy calculation just checking, not real test
+        prediction_classes = np.argmax(pred, axis=0)
+        real_y = np.argmax(true_labels, axis=0)
+        difference = (prediction_classes - real_y)
+        accuracy = len(difference[difference == 0]) / len(difference)
+        print(accuracy)
 
 
 if __name__ == '__main__':
