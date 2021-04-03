@@ -84,23 +84,26 @@ def main():
 
     early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 5)
     learning_rate = 0.009
-    params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, 480 * 150, 256,
-                                       use_batchnorm=use_batchnorm, validation=(x_val, y_val),
-                                       early_stopping=early_stopping)
-    train_acc = Main.Predict(x_train, y_train, params, use_batchnorm)
-    val_acc = Main.Predict(x_val, y_val, params, use_batchnorm)
-    x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
-    y_test = np.eye(10)[y_test.astype(int)].transpose()
-    test_acc = Main.Predict(x_test, y_test, params, use_batchnorm)
-
-    print(f'train acc is: {train_acc} val acc is: {val_acc} , test acc is: {test_acc}')
-    labels = list(range(1, len(costs)*100, 100))
-    plt.plot(labels, costs)
-    plt.ylabel("Cost of train")
-    plt.xlabel("Training steps")
-    plt.title("without batchnorm")
-    plt.show()
-    plt.savefig('noBatch.png')
+    epochs = 150
+    for batch_size in [64, 128, 256, 512, 1024]:
+        coef = int(48000 / batch_size)
+        params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, coef * epochs, batch_size,
+                                   use_batchnorm=use_batchnorm, validation=(x_val, y_val),
+                                   early_stopping=early_stopping)
+        train_acc = Main.Predict(x_train, y_train, params, use_batchnorm)
+        val_acc = Main.Predict(x_val, y_val, params, use_batchnorm)
+        x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
+        y_test = np.eye(10)[y_test.astype(int)].transpose()
+        test_acc = Main.Predict(x_test, y_test, params, use_batchnorm)
+        print(f"Batch size = {batch_size}")
+        print(f'train acc is: {train_acc} val acc is: {val_acc} , test acc is: {test_acc}')
+        labels = list(range(1, len(costs)*100, 100))
+        plt.plot(labels, costs)
+        plt.ylabel("Cost of train")
+        plt.xlabel("Training steps")
+        plt.title(f"batch norm={use_batchnorm} - batch_size: {batch_size}")
+        plt.show()
+        plt.savefig(f'batch norm={use_batchnorm} - batch size={batch_size}.png')
 
 
 if __name__ == "__main__":
