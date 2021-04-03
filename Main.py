@@ -9,6 +9,7 @@ def initialize_parameters(layer_dims: List) -> Dict:
         'b': list()
     }
     # lets try smart init
+    np.random.seed(3)
     for idx in range(1, len(layer_dims)):
         weights = np.random.randn(layer_dims[idx - 1], layer_dims[idx])*np.sqrt(2/layer_dims[idx-1])
         bias = np.random.randn(layer_dims[idx], 1)
@@ -225,7 +226,7 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
     full_dims = [X.shape[0]] + layer_dims
     params = initialize_parameters(full_dims)
     input_gen = generator_by_batch(X, Y, batch_size)
-    for curr_iter in range(num_iterations):
+    for curr_iter in range(1, num_iterations + 1):
         curr_inp, curr_labels = next(input_gen)
         AL, caches = L_model_forward(curr_inp, params, use_batchnorm)
         if curr_iter % 100 == 0:
@@ -235,13 +236,16 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
             if validation is not None:
                 val_acc = Predict(validation[0], validation[1], params, use_batchnorm)
                 train_acc = Predict(X, Y, params, use_batchnorm)
-                print("iter num: {} - train cost: {:.3f} , train acc: {:.3f}  - val acc: {:.3f}".format(
-                    curr_iter, cost, train_acc, val_acc))
+                val_ans, _ = L_model_forward(validation[0], params, use_batchnorm)
+                val_cost = compute_cost(val_ans, validation[1])
+
+                print("iter num: {} - train cost: {:.3f} , train acc: {:.3f}  - val acc: {:.3f} , val-cost: {:.3f}".
+                       format(curr_iter, cost, train_acc, val_acc, val_cost))
 
             if early_stopping is not None:
-                early_ans = early_stopping(params, use_batchnorm, cost)
+                early_ans = early_stopping(params, use_batchnorm, val_cost)
                 if early_ans is not None:
-                    return early_ans
+                    return early_ans, costs
 
         grads = L_model_backward(AL, curr_labels, caches)
         params = Update_parameters(params, grads, learning_rate)

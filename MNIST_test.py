@@ -1,9 +1,7 @@
 from typing import Callable
-
-
 from tensorflow.keras.datasets import mnist
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 import Main
 
@@ -71,7 +69,7 @@ def old_test_split(x_train, y_train, x_test, y_test):
     y_test = to_categorical(y_test, 10)
     x_train = reshape_x_input(x_train).transpose() / PIXEL_MAX_VALUE
     x_val = reshape_x_input(x_val).transpose() / PIXEL_MAX_VALUE
-    x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
+
     y_train = y_train.transpose()
     y_val = y_val.transpose()
     y_test = y_test.transpose()
@@ -79,14 +77,30 @@ def old_test_split(x_train, y_train, x_test, y_test):
 
 
 def main():
+    use_batchnorm = False
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, y_train, x_val, y_val = pre_process_input(x_train, y_train, 0.1)
+    x_train, y_train, x_val, y_val = pre_process_input(x_train, y_train, 0.2)
     # x_train, y_train, x_val, y_val, x_test, y_test = old_test_split(x_train, y_train, x_test, y_test)
 
-    early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 3)
+    early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 5)
     learning_rate = 0.009
-    Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, 480 * 150, 256, use_batchnorm=False,
-                       validation=(x_val, y_val), early_stopping=early_stopping)
+    params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, 480 * 150, 256,
+                                       use_batchnorm=use_batchnorm, validation=(x_val, y_val),
+                                       early_stopping=early_stopping)
+    train_acc = Main.Predict(x_train, y_train, params, use_batchnorm)
+    val_acc = Main.Predict(x_val, y_val, params, use_batchnorm)
+    x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
+    y_test = np.eye(10)[y_test.astype(int)].transpose()
+    test_acc = Main.Predict(x_test, y_test, params, use_batchnorm)
+
+    print(f'train acc is: {train_acc} val acc is: {val_acc} , test acc is: {test_acc}')
+    labels = list(range(1, len(costs)*100, 100))
+    plt.plot(labels, costs)
+    plt.ylabel("Cost of train")
+    plt.xlabel("Training steps")
+    plt.title("without batchnorm")
+    plt.show()
+    plt.savefig('noBatch.png')
 
 
 if __name__ == "__main__":
