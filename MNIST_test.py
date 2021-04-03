@@ -2,41 +2,44 @@ from typing import Callable
 from tensorflow.keras.datasets import mnist
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
+import math
 
 import Main
 
 PIXEL_MAX_VALUE = 255
 
 
-def reshape_x_input(inp):
+def reshape_x_input(inp) :
     return inp.reshape(inp.shape[0], inp.shape[1] * inp.shape[2])
 
 
-def get_early_stopping_callback(train_x, train_y, val_x, val_y, steps: int) -> Callable:
+def get_early_stopping_callback(train_x, train_y, val_x, val_y, steps: int) -> Callable :
     count = 0
-    max_cost = np.inf
+    max_val_acc = -1
     best_params = None
 
-    def callback(params, use_batchnorm, curr_cost):
+    def callback(params, use_batchnorm):
         nonlocal count
-        nonlocal max_cost
+        nonlocal max_val_acc
         nonlocal best_params
-        if curr_cost <= max_cost:
+        val_acc = Main.Predict(val_x, val_y, params, use_batchnorm)
+        if val_acc >= max_val_acc:
             count = 0
             best_params = params
-            max_cost = curr_cost
+            max_val_acc = val_acc
         else:
             count += 1
         if count > steps:
-            print("early stopping")
+            print("early stopping with ma")
             return best_params
-        else:
+        else :
             return None
 
     return callback
 
 
-def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray) :
     """
     :param X:
     :param Y:
@@ -51,8 +54,8 @@ def pre_process_input(X, Y, val_size: float) -> (np.ndarray, np.ndarray, np.ndar
     shuf_y = stacked[-1]
     train_x = shuf_x[:, :cut_off_idx]
     train_y = shuf_y[:cut_off_idx]
-    val_x = shuf_x[:, cut_off_idx:]
-    val_y = shuf_y[cut_off_idx:]
+    val_x = shuf_x[:, cut_off_idx :]
+    val_y = shuf_y[cut_off_idx :]
     # convert to categorical
     train_y = np.eye(10)[train_y.astype(int)].transpose()
     val_y = np.eye(10)[val_y.astype(int)].transpose()
@@ -77,6 +80,7 @@ def old_test_split(x_train, y_train, x_test, y_test):
 
 
 def main():
+    print("Start")
     use_batchnorm = False
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train, y_train, x_val, y_val = pre_process_input(x_train, y_train, 0.2)
@@ -84,29 +88,31 @@ def main():
     x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
     y_test = np.eye(10)[y_test.astype(int)].transpose()
     learning_rate = 0.009
-    epochs = 150
+    epochs = 200
 
-    for batch_size in [64, 128, 256, 512, 1024]:
-        early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 10)
-        coef = int(48000 / batch_size)
-        
+    for batch_size in [32, 64, 128, 256, 512, 1024]:
+        early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 25)
+        coef = math.ceil(48000 / batch_size)
+        start_time = datetime.datetime.now()
         params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, coef * epochs, batch_size,
-                                   use_batchnorm=use_batchnorm, validation=(x_val, y_val),
-                                   early_stopping=early_stopping)
+                                           use_batchnorm=use_batchnorm, validation=(x_val, y_val),
+                                           early_stopping=early_stopping)
+        end_time = datetime.datetime.now()
+        time_diff = end_time - start_time
         train_acc = Main.Predict(x_train, y_train, params, use_batchnorm)
         val_acc = Main.Predict(x_val, y_val, params, use_batchnorm)
         test_acc = Main.Predict(x_test, y_test, params, use_batchnorm)
-        print(f"Batch size = {batch_size}")
+        print(f"Batch size = {batch_size}, train time: {time_diff.seconds} seconds")
         print(f'train acc is: {train_acc} val acc is: {val_acc} , test acc is: {test_acc}')
-        labels = list(range(1, len(costs)*100, 100))
+        labels = list(range(1, len(costs) * 100, 100))
         plt.plot(labels, costs)
         plt.ylabel("Cost of train")
         plt.xlabel("Training steps")
         plt.title(f"batch norm={use_batchnorm} - batch_size: {batch_size}")
         plt.show()
         plt.savefig(f'batch norm={use_batchnorm} - batch size={batch_size}.png')
-        print("\n\n")
+        # print("\n\n")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" :
     main()
