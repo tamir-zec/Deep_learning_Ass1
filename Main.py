@@ -239,7 +239,7 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
                     curr_iter, cost, train_acc, val_acc))
 
             if early_stopping is not None:
-                early_ans = early_stopping(params, use_batchnorm)
+                early_ans = early_stopping(params, use_batchnorm, cost)
                 if early_ans is not None:
                     return early_ans
 
