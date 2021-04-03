@@ -81,10 +81,13 @@ def main():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train, y_train, x_val, y_val = pre_process_input(x_train, y_train, 0.2)
     # x_train, y_train, x_val, y_val, x_test, y_test = old_test_split(x_train, y_train, x_test, y_test)
+    x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
+    y_test = np.eye(10)[y_test.astype(int)].transpose()
 
-    early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 5)
+    early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 10)
     learning_rate = 0.009
     epochs = 150
+
     for batch_size in [64, 128, 256, 512, 1024]:
         coef = int(48000 / batch_size)
         params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, coef * epochs, batch_size,
@@ -92,8 +95,6 @@ def main():
                                    early_stopping=early_stopping)
         train_acc = Main.Predict(x_train, y_train, params, use_batchnorm)
         val_acc = Main.Predict(x_val, y_val, params, use_batchnorm)
-        x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
-        y_test = np.eye(10)[y_test.astype(int)].transpose()
         test_acc = Main.Predict(x_test, y_test, params, use_batchnorm)
         print(f"Batch size = {batch_size}")
         print(f'train acc is: {train_acc} val acc is: {val_acc} , test acc is: {test_acc}')
@@ -104,6 +105,7 @@ def main():
         plt.title(f"batch norm={use_batchnorm} - batch_size: {batch_size}")
         plt.show()
         plt.savefig(f'batch norm={use_batchnorm} - batch size={batch_size}.png')
+        print("\n\n")
 
 
 if __name__ == "__main__":
