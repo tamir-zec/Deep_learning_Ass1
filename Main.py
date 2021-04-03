@@ -204,7 +204,8 @@ def generator_by_batch(X: np.ndarray, Y: np.ndarray, batch_size: int):
 
 def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate: float,
                   num_iterations: int, batch_size: int, use_batchnorm: bool = False,
-                  validation: Tuple[np.ndarray, np.ndarray]= None) -> [Dict, List[float]]:
+                  validation: Tuple[np.ndarray, np.ndarray]= None,
+                  early_stopping: Callable = None) -> [Dict, List[float]]:
     """
     :param X: [height*width , samples] - model input
     :param Y: [classes, samples] - one hot vector of real labels
@@ -212,9 +213,13 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
     :param learning_rate:
     :param num_iterations:
     :param batch_size:
+    :param use_batchnorm:
+    :param validation:
+    :param early_stopping:
     :return: [parameters, costs]:
               * parameters - dictionary of weights and bias (like init)
               * costs = list of floats
+
     """
     costs = list()
     full_dims = [X.shape[0]] + layer_dims
@@ -225,9 +230,19 @@ def L_layer_model(X: np.ndarray, Y: np.ndarray, layer_dims: List, learning_rate:
         AL, caches = L_model_forward(curr_inp, params, use_batchnorm)
         if curr_iter % 100 == 0:
             cost_AL, _ = L_model_forward(X, params, use_batchnorm)
-            costs.append(compute_cost(cost_AL, Y))
+            cost = compute_cost(cost_AL, Y)
+            costs.append(cost)
             if validation is not None:
-                print(f'iter num:{curr_iter} - accuracy: {Predict(validation[0], validation[1], params, use_batchnorm)}')
+                val_acc = Predict(validation[0], validation[1], params, use_batchnorm)
+                train_acc = Predict(X, Y, params, use_batchnorm)
+                print("iter num: {} - train cost: {:.3f} , train acc: {:.3f}  - val acc: {:.3f}".format(
+                    curr_iter, cost, train_acc, val_acc))
+
+            if early_stopping is not None:
+                early_ans = early_stopping(params, use_batchnorm)
+                if early_ans is not None:
+                    return early_ans
+
         grads = L_model_backward(AL, curr_labels, caches)
         params = Update_parameters(params, grads, learning_rate)
 
@@ -248,3 +263,5 @@ def Predict(X: np.ndarray, Y: np.ndarray, parameters: Dict, use_batchnorm: bool 
     difference = (prediction_classes - real_y)
     accuracy = len(difference[difference == 0]) / len(difference)
     return accuracy
+
+
