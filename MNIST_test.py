@@ -83,13 +83,13 @@ def main():
     # x_train, y_train, x_val, y_val, x_test, y_test = old_test_split(x_train, y_train, x_test, y_test)
     x_test = reshape_x_input(x_test).transpose() / PIXEL_MAX_VALUE
     y_test = np.eye(10)[y_test.astype(int)].transpose()
-
-    early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 10)
     learning_rate = 0.009
     epochs = 150
 
     for batch_size in [64, 128, 256, 512, 1024]:
+        early_stopping = get_early_stopping_callback(x_train, y_train, x_val, y_val, 10)
         coef = int(48000 / batch_size)
+        
         params, costs = Main.L_layer_model(x_train, y_train, [20, 7, 5, 10], learning_rate, coef * epochs, batch_size,
                                    use_batchnorm=use_batchnorm, validation=(x_val, y_val),
                                    early_stopping=early_stopping)
